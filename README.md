@@ -105,19 +105,6 @@ export GOOGLE_SHEETS_WEBHOOK_URL="https://script.google.com/macros/s/your-id/exe
 
 5. Run script with the same `--tracker-csv`; it will also push to Sheets.
 
-### Quick verification for Google Sheets sync
-
-```bash
-python ai_internship_multi_agent.py \
-  --name "Your Name" \
-  --skills "Python,Machine Learning,LLMs,PyTorch" \
-  --tracker-csv data/ai_internships_tracker.csv \
-  --demo-mode \
-  --sheets-webhook-url "https://script.google.com/macros/s/your-id/exec"
-```
-
-If webhook deployment is correct, your Google Sheet should receive/update rows.
-
 ## 4) Optional broader coverage
 
 For broader web discovery (Greenhouse/Lever/Workday pages), set:
@@ -132,40 +119,3 @@ and add your `SERPAPI_API_KEY`.
 
 - Deadline extraction is heuristic and depends on listing text.
 - You can keep extending `--extra-keywords` over time as you discover new role names.
-
-## 5) Run 24/7 on an always-on VM (recommended)
-
-If you want this to run while you sleep, deploy on a machine that stays online.
-
-### Option A: `systemd` timer (recommended on Linux VM)
-
-Files provided:
-- `deploy/systemd/ai-internships.service`
-- `deploy/systemd/ai-internships.timer`
-- `scripts/run_ai_tracker.sh`
-
-Commands:
-
-```bash
-sudo cp deploy/systemd/ai-internships.service /etc/systemd/system/
-sudo cp deploy/systemd/ai-internships.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now ai-internships.timer
-sudo systemctl status ai-internships.timer
-```
-
-Check latest run logs:
-
-```bash
-journalctl -u ai-internships.service -n 100 --no-pager
-```
-
-### Option B: cron (simple alternative)
-
-Use the provided example in `deploy/cron/ai_internships_cron.txt`:
-
-```bash
-crontab -e
-```
-
-Paste the line from that file and save.
