@@ -1,29 +1,63 @@
 #!/usr/bin/env python3
-"""Multi-agent internship finder focused on AI internships worldwide.
-
-Agents:
-1) ScoutAgent: discovers internship postings from search engines/APIs.
-2) AnalystAgent: filters and scores postings against candidate preferences.
-3) CuratorAgent: deduplicates and returns ranked recommendations.
-
-This file is intentionally framework-light so you can extend it with LangGraph,
-CrewAI, or your preferred orchestration layer later.
-"""
+"""Multi-agent system to discover and track AI internships globally."""
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import csv
 import dataclasses
 import datetime as dt
 import json
 import os
 import re
-from typing import Any
-
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_AI_KEYWORDS = [
+    "artificial intelligence",
+    "ai",
+    "machine learning",
+    "ml",
+    "deep learning",
+    "nlp",
+    "llm",
+    "generative ai",
+    "computer vision",
+    "data science",
+    "ai automation",
+    "ai agent",
+    "autonomous systems",
+]
+
+ROLE_VARIANTS = [
+    "ai intern",
+    "machine learning intern",
+    "ml intern",
+    "ai engineer intern",
+    "machine learning engineer intern",
+    "ai automation engineer",
+    "ai automation intern",
+    "data science intern",
+    "nlp intern",
+    "llm intern",
+    "genai intern",
+    "research intern ai",
+    "applied scientist intern",
+    "ai research assistant",
+]
+
+INTERNSHIP_TERMS = [
+    "intern",
+    "internship",
+    "graduate internship",
+    "summer internship",
+    "off-cycle internship",
+]
 
 
 @dataclasses.dataclass
@@ -31,9 +65,12 @@ class CandidateProfile:
     full_name: str
     skills: list[str]
     preferred_regions: list[str]
+    ai_keywords: list[str]
+    role_variants: list[str]
+    internship_terms: list[str]
     visa_required: bool = False
     remote_ok: bool = True
-    max_results: int = 25
+    max_results: int = 50
 
 
 @dataclasses.dataclass
@@ -43,23 +80,20 @@ class Internship:
     location: str
     url: str
     source: str
-    snippet: str = ""
+    description: str = ""
+    deadline: str = "Unknown"
     posted_at: str | None = None
     score: float = 0.0
     reasons: list[str] = dataclasses.field(default_factory=list)
+    matched_keywords: list[str] = dataclasses.field(default_factory=list)
 
 
 class ScoutAgent:
-    """Discovers possible internship opportunities across multiple regions."""
-
     def __init__(self, profile: CandidateProfile) -> None:
         self.profile = profile
 
     async def run(self) -> list[Internship]:
-        tasks = [
-            self._search_with_serpapi(),
-            self._search_with_remotive(),
-        ]
+        tasks = [self._search_with_serpapi(), self._search_with_remotive()]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         internships: list[Internship] = []
@@ -70,21 +104,17 @@ class ScoutAgent:
         return internships
 
     async def _search_with_serpapi(self) -> list[Internship]:
-        """Search web jobs pages using SerpAPI (optional, needs API key)."""
         api_key = os.getenv("SERPAPI_API_KEY")
         if not api_key:
             return []
 
+        role_query = " OR ".join(f'"{k}"' for k in self.profile.role_variants[:8])
+        ai_query = " OR ".join(f'"{k}"' for k in self.profile.ai_keywords[:8])
         query = (
-            "(AI internship OR Machine Learning internship OR Generative AI intern) "
-            "(2026 OR 2027) site:greenhouse.io OR site:lever.co OR site:workdayjobs.com"
+            f"({role_query}) OR (({ai_query}) AND (intern OR internship)) "
+            "site:greenhouse.io OR site:lever.co OR site:workdayjobs.com"
         )
-        params = {
-            "engine": "google",
-            "q": query,
-            "api_key": api_key,
-            "num": 30,
-        }
+        params = {"engine": "google", "q": query, "api_key": api_key, "num": 70}
         url = "https://serpapi.com/search?" + urllib.parse.urlencode(params)
         data = await asyncio.to_thread(_fetch_json, url)
 
