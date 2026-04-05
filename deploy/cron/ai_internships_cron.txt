@@ -1,0 +1,2 @@
+# Run every hour at minute 5
+5 * * * * APP_DIR=/workspace/Job-Application-System /workspace/Job-Application-System/scripts/run_ai_tracker.sh >> /workspace/Job-Application-System/ai_tracker.log 2>&1

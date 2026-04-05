@@ -1,0 +1,15 @@
+# Secrets / local config
+.env
+.env.local
+
+# Runtime outputs that may contain personal/job-tracking data
+/data/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS/IDE files
+.DS_Store
+.vscode/

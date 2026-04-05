@@ -1,0 +1,10 @@
+[Unit]
+Description=Run AI Internship Tracker hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+Unit=ai-internships.service
+
+[Install]
+WantedBy=timers.target
