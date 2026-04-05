@@ -55,11 +55,29 @@ python ai_internship_multi_agent.py \
   --tracker-csv data/ai_internships_tracker.csv
 ```
 
+### Step A.1 — no-network verification (recommended first)
+
+```bash
+python ai_internship_multi_agent.py \
+  --name "Your Name" \
+  --skills "Python,Machine Learning,LLMs,PyTorch" \
+  --tracker-csv data/ai_internships_tracker.csv \
+  --demo-mode
+```
+
+This runs against built-in demo internships so you can verify scoring and CSV updates even if APIs are unavailable.
+
 ### Step B — verify output
 
 - Check terminal output for ranked matches.
 - Open `data/ai_internships_tracker.csv` in Excel.
 - Confirm columns include `company`, `title`, `location`, `deadline`, `description`, `url`, `score`, and `matched_keywords`.
+
+### Step B.1 — run automated tests
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
 
 ### Step C — continuous updates (automation)
 
